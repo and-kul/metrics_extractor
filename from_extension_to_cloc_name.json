@@ -1,0 +1,15 @@
+{
+  "java" : "Java",
+  "cpp" : "C++",
+  "cc" : "C++",
+  "cxx" : "C++",
+  "mm" : "C++",
+  "c" : "C",
+  "h" : "C/C++ Header",
+  "hpp" : "C/C++ Header",
+  "cs" : "C#",
+  "py" : "Python",
+  "js" : "JavaScript",
+  "php" : "PHP",
+  "m" : "Objective C"
+}
