@@ -13,6 +13,9 @@ class Config:
         """ get path to the cloc program executable (like cloc-1.72.exe for Windows)"""
         return self.parser[section]['path']
 
+    def get_python27_path(self, section='python27'):
+        return self.parser[section]['path']
+
     def get_postgresql_conn_parameters(self, section='postgresql'):
         # get section, default to postgresql
         db = {}

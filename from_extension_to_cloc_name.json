@@ -3,7 +3,7 @@
   "cpp" : "C++",
   "cc" : "C++",
   "cxx" : "C++",
-  "mm" : "C++",
+  "mm" : "Objective C++",
   "c" : "C",
   "h" : "C/C++ Header",
   "hpp" : "C/C++ Header",

@@ -99,51 +99,45 @@ def send_data_to_db(conn, url, project_name, languages_statistics):
     cur.close()
 
 
+
+
+
+
 def main():
     from config import Config
-    init()
-    url = input("Enter URL to the GitHub repository: ")
+    # init()
+    # url = input("Enter URL to the GitHub repository: ")
     config = Config()
 
-    if url.endswith(".git"):
-        project_name = url[url.rfind("/") + 1: url.rfind(".git")]
-    else:
-        project_name = url[url.rfind("/") + 1:]
+    # if url.endswith(".git"):
+    #     project_name = url[url.rfind("/") + 1: url.rfind(".git")]
+    # else:
+    #     project_name = url[url.rfind("/") + 1:]
 
-    print(project_name)
+    url = "https://github.com/google/gson"
+    project_name = "gson"
 
-    ret = subprocess.call(['git', 'clone', url, project_name])
-    if ret != 0:
-        print("ERROR: git clone crashed. Status code {0}".format(ret))
-        exit(1)
-    print("git clone finished")
+    # ret = subprocess.call(['git', 'clone', url, project_name])
+    # if ret != 0:
+    #     print("ERROR: git clone crashed. Status code {0}".format(ret))
+    #     exit(1)
+    # print("git clone finished")
 
     cloc_filename = project_name + "_cloc.json"
-    cloc_json = subprocess.getoutput([config.get_cloc_path(), '--json', project_name])
-    if ret != 0:
-        print("ERROR: cloc crashed. Status code {0}".format(ret))
-        exit(1)
+    cloc_json = subprocess.getoutput([config.get_cloc_path(), '--json', '--by-file', project_name])
+    # if ret != 0:
+    #     print("ERROR: cloc crashed. Status code {0}".format(ret))
+    #     exit(1)
     print("cloc finished")
 
     # with open(cloc_filename, 'wt') as cloc_output_file:
     #     cloc_output_file.write(cloc_json)
 
-    lizard_filename = project_name + "_lizard.xml"
-    lizard_xml = subprocess.getoutput(['lizard', '--xml', '--working_threads 4', project_name])
-    if ret != 0:
-        print("ERROR: lizard crashed. Status code {0}".format(ret))
-        exit(1)
-    print("lizard finished")
 
-    # with open(lizard_filename, 'wt') as lizard_output_file:
-    #     lizard_output_file.write(lizard_xml)
 
-    languages_statistics = {}
 
-    process_lizard_xml_string(lizard_xml, languages_statistics)
-
-    process_cloc_json_string(cloc_json, languages_statistics)
-
+    from database import db_helpers
+    project_id = 0
     conn = None
 
     try:
@@ -152,7 +146,35 @@ def main():
         # connect to the PostgreSQL database
         conn = psycopg2.connect(**conn_params)
 
-        send_data_to_db(conn, url, project_name, languages_statistics)
+        project_id = db_helpers.add_new_project(conn, url, project_name)
+        print("project_id =", project_id)
+
+        import json
+        from src_file import SrcFile
+        from cloc_file_metrics import ClocFileMetrics
+        cloc_results = json.loads(cloc_json)
+
+        all_src_files = []
+
+        for file_element in cloc_results:
+            if file_element in ["header", "SUM"]:
+                continue
+            src_file = SrcFile(file_element, cloc_results[file_element]["language"])
+            src_file.project_id = project_id
+            cloc_file_metrics = ClocFileMetrics(cloc_results[file_element]["blank"],
+                                                cloc_results[file_element]["comment"],
+                                                cloc_results[file_element]["code"])
+            src_file.cloc_metrics = cloc_file_metrics
+            all_src_files.append(src_file)
+
+        from language_handlers.java_handler import JavaHandler
+
+        java_handler = JavaHandler(conn, all_src_files)
+        java_handler.handle()
+
+        print("hello")
+
+
 
     except psycopg2.DatabaseError as error:
         print(error)
@@ -160,10 +182,57 @@ def main():
         if conn is not None:
             conn.close()
 
-    # os.remove(cloc_filename)
-    # os.remove(lizard_filename)
 
-    shutil.rmtree(project_name, ignore_errors=False, onerror=handle_remove_readonly)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # for language in languages_statistics:
+    #     cloc_files = cloc_results[language]["nFiles"]
+    #     cloc_blank_lines = cloc_results[language]["blank"]
+    #     cloc_comment_lines = cloc_results[language]["comment"]
+    #     cloc_code_lines = cloc_results[language]["code"]
+    #     languages_statistics[language].add_cloc_info(cloc_files, cloc_blank_lines, cloc_comment_lines, cloc_code_lines)
+    #
+    # languages_statistics = {}
+    #
+    # # process_lizard_xml_string(lizard_xml, languages_statistics)
+    #
+    # process_cloc_json_string(cloc_json, languages_statistics)
+    #
+    # conn = None
+    #
+    # try:
+    #     # get PostgreSQL connection parameters
+    #     conn_params = config.get_postgresql_conn_parameters()
+    #     # connect to the PostgreSQL database
+    #     conn = psycopg2.connect(**conn_params)
+    #
+    #     send_data_to_db(conn, url, project_name, languages_statistics)
+    #
+    # except psycopg2.DatabaseError as error:
+    #     print(error)
+    # finally:
+    #     if conn is not None:
+    #         conn.close()
+    #
+    # # os.remove(cloc_filename)
+    # # os.remove(lizard_filename)
+    #
+    # shutil.rmtree(project_name, ignore_errors=False, onerror=handle_remove_readonly)
 
     print("success")
     exit(0)

@@ -1,6 +1,8 @@
+DROP TABLE IF EXISTS files;
 DROP TABLE IF EXISTS statistics;
 DROP TABLE IF EXISTS languages;
 DROP TABLE IF EXISTS projects;
+
 
 CREATE TABLE projects (
   id   SERIAL PRIMARY KEY,
@@ -8,9 +10,22 @@ CREATE TABLE projects (
   name TEXT NOT NULL
 );
 
+
 CREATE TABLE languages (
   name TEXT PRIMARY KEY
 );
+
+
+CREATE TABLE files (
+  id SERIAL PRIMARY KEY,
+  project_id INTEGER NOT NULL REFERENCES projects (id),
+  path TEXT NOT NULL,
+  language_name TEXT NOT NULL REFERENCES languages (name),
+  cloc_blank_lines INTEGER,
+  cloc_comment_lines INTEGER,
+  cloc_code_lines INTEGER
+);
+
 
 CREATE TABLE statistics (
   project_id INTEGER NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
@@ -37,4 +52,5 @@ INSERT INTO languages (name) VALUES
   ('Python'),
   ('JavaScript'),
   ('PHP'),
-  ('Objective C');
+  ('Objective C'),
+  ('Objective C++');
