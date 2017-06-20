@@ -169,7 +169,7 @@ def main():
 
         from language_handlers.java_handler import JavaHandler
 
-        java_handler = JavaHandler(conn, all_src_files)
+        java_handler = JavaHandler(project_name, conn, all_src_files)
         java_handler.handle()
 
         print("hello")

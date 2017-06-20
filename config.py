@@ -16,6 +16,12 @@ class Config:
     def get_python27_path(self, section='python27'):
         return self.parser[section]['path']
 
+    def get_metrixpp_path(self, section='metrix++'):
+        return self.parser[section]['path']
+
+    def get_path_for_temp_metrixpp_db(self, section='metrix++'):
+        return self.parser[section]['db_file']
+
     def get_postgresql_conn_parameters(self, section='postgresql'):
         # get section, default to postgresql
         db = {}
