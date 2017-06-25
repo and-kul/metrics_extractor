@@ -42,6 +42,8 @@ class JavaHandler(BaseHandler):
             region_info.file_info = file_info
 
         for region_info in reversed(regions):
+            if region_info.is_inside_some_function:
+                continue
             if isinstance(region_info, FunctionInfo):
                 db_helpers.add_new_function(self.conn, region_info)
             else:

@@ -58,8 +58,9 @@ def add_new_function(conn, function_info: FunctionInfo) -> int:
 
     cur = conn.cursor()
     cur.execute(insert_function_sql, (function_info.outer_region.id, function_info.short_name,
-                                      function_info.total_lines, function_info.total_code_lines,
-                                      function_info.total_comment_lines,
+                                      function_info.total_lines,
+                                      function_info.total_code_lines,  # todo: or own_code_lines ?
+                                      function_info.total_comment_lines,  # todo: or own_comment_lines ?
                                       function_info.cyclomatic_complexity))
     function_id = cur.fetchone()[0]
     function_info.id = function_id

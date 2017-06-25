@@ -39,15 +39,9 @@ def create_function_info(region_element: etree.ElementBase) -> FunctionInfo:
     function_info = FunctionInfo()
     fill_region_info(function_info, region_element)
 
-    # check that there are no nested functions:
-    if len(get_subregions(region_element)) > 0:
-        print("ERROR: Nested functions detected in: {0}".format(function_info.short_name))
-        print("ERROR: Nested functions detected in: {0}".format(function_info.short_name))
-
     std_code_complexity_element = region_element.find("./data/std.code.complexity")
 
-    # todo: check correctness
-    # metrixpp ccn is always mistaken -1 ???
+    # metrixpp ccn is always mistaken by -1
     cyclomatic_complexity = int(std_code_complexity_element.get("cyclomatic")) + 1
 
     function_info.cyclomatic_complexity = cyclomatic_complexity
@@ -64,8 +58,12 @@ def extract_info_recursively(region_element: etree.ElementBase, outer_region: Un
         current_region_info = create_function_info(region_element)
     else:
         current_region_info = create_region_info(region_element)
-        for inner_region in get_subregions(region_element):
-            extract_info_recursively(inner_region, current_region_info, regions)
+
+    if (outer_region is not None) and (outer_region.is_inside_some_function or isinstance(outer_region, FunctionInfo)):
+        current_region_info.is_inside_some_function = True
+
+    for inner_region in get_subregions(region_element):
+        extract_info_recursively(inner_region, current_region_info, regions)
 
     current_region_info.outer_region = outer_region
 

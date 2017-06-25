@@ -19,3 +19,5 @@ class RegionInfo:
 
         self.ccn_sum: int = None  # sum of cyclomatic complexity for all functions inside
         self.n_functions: int = None
+
+        self.is_inside_some_function: bool = False  # cascades down the tree
