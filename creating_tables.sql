@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS functions;
 DROP TABLE IF EXISTS regions;
+DROP TABLE IF EXISTS region_types;
 DROP TABLE IF EXISTS files;
 DROP TABLE IF EXISTS languages;
 DROP TABLE IF EXISTS projects;
@@ -28,37 +29,37 @@ CREATE TABLE files (
 );
 
 
-CREATE TABLE regions (
-  file_id INTEGER NOT NULL REFERENCES files (id),
-  region_id      INTEGER NOT NULL,
-  PRIMARY KEY (file_id, region_id),
-  type TEXT NOT NULL,
-  outer_region_id INTEGER,
-  FOREIGN KEY (file_id, outer_region_id) REFERENCES regions (file_id, region_id),
-  total_lines INTEGER,
-  code_lines INTEGER,
-  blank_lines INTEGER,
-  comment_lines INTEGER,
-  average_cyclomatic_complexity DOUBLE PRECISION,
-  n_functions INTEGER
+CREATE TABLE region_types (
+  name TEXT PRIMARY KEY
 );
+
+
+CREATE TABLE regions (
+  id                              SERIAL PRIMARY KEY,
+  file_id                         INTEGER NOT NULL REFERENCES files (id),
+  region_type                     TEXT    NOT NULL REFERENCES region_types (name),
+  short_name                      TEXT    NOT NULL,
+  outer_region_id                 INTEGER REFERENCES regions (id),
+  total_lines                     INTEGER,
+  code_lines                      INTEGER,
+  comment_lines                   INTEGER,
+  blank_lines                     INTEGER,
+  average_cyclomatic_complexity   DOUBLE PRECISION,
+  average_code_lines_per_function DOUBLE PRECISION,
+  n_functions                     INTEGER
+);
+
 
 CREATE TABLE functions (
-  file_id INTEGER NOT NULL REFERENCES files (id),
-  region_id INTEGER NOT NULL,
-  function_id INTEGER NOT NULL,
-  PRIMARY KEY (file_id, function_id),
-  FOREIGN KEY (file_id, region_id) REFERENCES regions (file_id, region_id),
-  total_lines INTEGER,
-  code_lines INTEGER,
-  blank_lines INTEGER,
-  comment_lines INTEGER,
-  cycomatic_complexity INTEGER
+  id                    SERIAL PRIMARY KEY,
+  region_id             INTEGER NOT NULL REFERENCES regions (id),
+  short_name            TEXT    NOT NULL,
+  total_lines           INTEGER,
+  code_lines            INTEGER,
+  comment_lines         INTEGER,
+  blank_lines           INTEGER,
+  cyclomatic_complexity INTEGER
 );
-
-
-
-
 
 
 INSERT INTO languages (name) VALUES
@@ -72,3 +73,11 @@ INSERT INTO languages (name) VALUES
   ('PHP'),
   ('Objective C'),
   ('Objective C++');
+
+
+INSERT INTO region_types (name) VALUES
+  ('Global'),
+  ('Class'),
+  ('Interface'),
+  ('Namespace'),
+  ('Struct');

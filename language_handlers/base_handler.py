@@ -1,25 +1,25 @@
 from abc import ABC, abstractmethod
 from config import Config
+from info.file_info import FileInfo
+from info.project_info import ProjectInfo
+from typing import Collection
 
 
 class BaseHandler(ABC):
-    def __init__(self, project_name: str, conn, generic_src_files):
+    def __init__(self, project_info: ProjectInfo, conn):
         """
         Create new language handler
-        :param project_name: project name
+        :param project_info: ProjectInfo object
         :param conn: open db connection
-        :param generic_src_files: enumerable collection of SrcFile
         """
-        self.project_name = project_name
+        self.project_info = project_info
         self.conn = conn
-        self.src_files = self.filter_my_src_files(generic_src_files)
         self.config = Config()
 
-    @staticmethod
     @abstractmethod
-    def filter_my_src_files(generic_src_files):
+    def handle_one_file(self, file_info: FileInfo):
         pass
 
     @abstractmethod
-    def handle(self):
+    def handle_files(self, files: Collection[FileInfo]):
         pass
