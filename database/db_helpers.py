@@ -54,14 +54,12 @@ def add_new_function(conn, function_info: FunctionInfo) -> int:
     :return: new function_id
     """
     insert_function_sql = """INSERT INTO functions(region_id, short_name, total_lines, code_lines, comment_lines,
-        blank_lines, cyclomatic_complexity) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id;"""
-
-    blank_lines = function_info.total_lines - function_info.total_code_lines - function_info.total_comment_lines
+        cyclomatic_complexity) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id;"""
 
     cur = conn.cursor()
     cur.execute(insert_function_sql, (function_info.outer_region.id, function_info.short_name,
                                       function_info.total_lines, function_info.total_code_lines,
-                                      function_info.total_comment_lines, blank_lines,
+                                      function_info.total_comment_lines,
                                       function_info.cyclomatic_complexity))
     function_id = cur.fetchone()[0]
     function_info.id = function_id
@@ -80,11 +78,10 @@ def add_new_region(conn, region_info: RegionInfo) -> int:
     """
     insert_region_sql = """INSERT INTO regions(file_id, region_type, short_name,
         outer_region_id, total_lines, code_lines,
-        comment_lines, blank_lines, average_cyclomatic_complexity,
+        comment_lines, average_cyclomatic_complexity,
         average_code_lines_per_function, n_functions)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id;"""
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id;"""
 
-    blank_lines = region_info.total_lines - region_info.total_code_lines - region_info.total_comment_lines
     average_cyclomatic_complexity = region_info.ccn_sum / region_info.n_functions if region_info.n_functions != 0 else 0
     average_code_lines_per_function = None  # todo
     outer_region_id = region_info.outer_region.id if region_info.outer_region is not None else None
@@ -92,7 +89,7 @@ def add_new_region(conn, region_info: RegionInfo) -> int:
     cur = conn.cursor()
     cur.execute(insert_region_sql, (region_info.file_info.id, region_info.region_type.name, region_info.short_name,
                                     outer_region_id, region_info.total_lines, region_info.total_code_lines,
-                                    region_info.total_comment_lines, blank_lines, average_cyclomatic_complexity,
+                                    region_info.total_comment_lines, average_cyclomatic_complexity,
                                     average_code_lines_per_function, region_info.n_functions))
     region_id = cur.fetchone()[0]
     region_info.id = region_id
