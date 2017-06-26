@@ -11,6 +11,9 @@ class Config:
         # read config file
         self.parser.read(filename)
 
+    def get_todo_file_path(self, section='todo'):
+        return self.parser[section]['path']
+
     def get_cloc_path(self, section='cloc'):
         """ get path to the cloc program executable (like cloc-1.72.exe for Windows)"""
         return self.parser[section]['path']

@@ -2,13 +2,14 @@ from typing import Union, Type
 
 from info.project_info import ProjectInfo
 from language_handlers.base_handler import BaseHandler
-from language_handlers.java_handler import JavaHandler
+from language_handlers.metrixpp_handler import MetrixppHandler
 
 
 class HandlerProvider:
 
     from_language_to_handler_class = {
-        "Java": JavaHandler
+        "Java": MetrixppHandler,
+        "C#": MetrixppHandler
     }
 
 

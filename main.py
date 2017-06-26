@@ -57,10 +57,7 @@ def init_logging(level=logging.INFO):
     logging.basicConfig(level=level, filename=log_filename, format=fmt)
 
 
-def main():
-    init_logging(logging.INFO)
-
-    url = input("Enter URL to the GitHub repository: ")
+def handle_one_project(url: str):
     config = Config()
 
     if url.endswith(".git"):
@@ -117,7 +114,7 @@ def main():
         for file_info in all_files:
             language_handler = handler_provider.get_handler_for_language(file_info.language)
             if language_handler is None:
-                logging.info("Handler for {0} not fount".format(file_info.path))
+                logging.info("Handler for {0} not found".format(file_info.path))
             else:
                 logging.info("Start handling file {0}".format(file_info.path))
                 language_handler.handle_one_file(file_info)
@@ -135,6 +132,21 @@ def main():
 
     logging.warning("Success: project {0}".format(project_name))
     print("success")
+
+
+
+
+def main():
+    init_logging(logging.INFO)
+    config = Config()
+
+    todo_file = open(config.get_todo_file_path(), 'rt')
+    for line in todo_file:
+        if line.isspace():
+            continue
+        handle_one_project(line.strip())
+
+
     exit(0)
 
 
