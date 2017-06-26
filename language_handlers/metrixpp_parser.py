@@ -77,7 +77,15 @@ def extract_info_recursively(region_element: etree.ElementBase, outer_region: Un
 
 
 def parse_metrixpp_xml(metrixpp_xml: str) -> List[RegionInfo]:
-    root = etree.fromstring(metrixpp_xml)
+    from xml.sax.saxutils import escape
+    try:
+        root = etree.fromstring(metrixpp_xml)
+    except etree.XMLSyntaxError:
+        troubles = ["operator<<", "operator>>", "operator<", "operator>", "operator&", "operator&&"]
+        for trouble in troubles:
+            metrixpp_xml = metrixpp_xml.replace(trouble, escape(trouble))
+        root = etree.fromstring(metrixpp_xml)
+
     global_region_element = root.find("./data/file-data/regions/region")
     regions = []
     extract_info_recursively(global_region_element, None, regions)
