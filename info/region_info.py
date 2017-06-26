@@ -1,5 +1,5 @@
 from info.file_info import FileInfo
-from region_type import RegionType
+from info.region_type import RegionType
 
 
 class RegionInfo:

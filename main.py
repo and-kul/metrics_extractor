@@ -52,47 +52,63 @@ def init_logging(level=logging.INFO):
     now = datetime.now()
     log_filename = os.path.join('log', now.strftime(datetime_fmt) + '.log')
     Config.log_filename = log_filename
-    fmt = "%(filename)-16s[LINE:%(lineno)4d]# %(levelname)-8s [%(asctime)s]  %(message)s"
+    fmt = "%(filename)24s[LINE:%(lineno)4d]# %(levelname)-8s [%(asctime)s]  %(message)s"
 
     logging.basicConfig(level=level, filename=log_filename, format=fmt)
 
 
-def handle_one_project(url: str):
-    config = Config()
-
+def make_project_name_from_url(url: str) -> str:
     if url.endswith(".git"):
         project_name = url[url.rfind("/") + 1: url.rfind(".git")]
     else:
         project_name = url[url.rfind("/") + 1:]
+    return project_name
 
-    logging.warning("Start processing of project: {0}".format(project_name))
-    print("Start processing of project: {0}".format(project_name))
 
-    project_info: ProjectInfo = ProjectInfo(url, project_name)
+def git_clone(project_info: ProjectInfo):
+    logging.info("Project \"{0}\": git clone started".format(project_info.name))
 
     # clone project to local directory ./<project_name>
-    ret = subprocess.call(['git', 'clone', url, project_name])
+    ret = subprocess.call(['git', 'clone', project_info.url, project_info.name])
     if ret != 0:
         print("ERROR: git clone crashed. Status code {0}".format(ret))
         exit(1)
-    logging.warning("git clone finished")
+    logging.info("Project \"{0}\": git clone finished".format(project_info.name))
+    print("Project \"{0}\": git clone finished".format(project_info.name))
 
-    cloc_json = subprocess.getoutput([config.get_cloc_path(), '--json', '--by-file', project_name])
-    # if ret != 0:
-    #     print("ERROR: cloc crashed. Status code {0}".format(ret))
-    #     exit(1)
-    logging.info("cloc finished")
 
+def remove_local_project_directory(project_info: ProjectInfo):
+    logging.info("Project \"{0}\": removing project directory...".format(project_info.name))
+    shutil.rmtree(project_info.name, ignore_errors=False, onerror=handle_remove_readonly)
+    logging.info("Project \"{0}\": project directory has been removed".format(project_info.name))
+    print("Project \"{0}\": project directory has been removed".format(project_info.name))
+
+
+def get_cloc_json_for_project(project_info: ProjectInfo) -> str:
+    logging.info("Project \"{0}\": cloc started".format(project_info.name))
+    completed_process = subprocess.run([Config.get_cloc_path(), '--json', '--by-file', project_info.name],
+                                       stdout=subprocess.PIPE, encoding='utf-8')
+    if completed_process.returncode != 0:
+        logging.error("Project \"{0}\": cloc crashed. Status code = {1}"
+                      .format(project_info.name, completed_process.returncode))
+        print("ERROR: Project \"{0}\": cloc crashed. Status code = {1}"
+                      .format(project_info.name, completed_process.returncode))
+        exit(1)
+    logging.info("Project \"{0}\": cloc finished".format(project_info.name))
+    return completed_process.stdout
+
+
+
+def analyze_project(project_info: ProjectInfo):
+    cloc_json = get_cloc_json_for_project(project_info)
     conn = None
 
     try:
-        # get PostgreSQL connection parameters
-        conn_params = config.get_postgresql_conn_parameters()
-        # connect to the PostgreSQL database
+        conn_params = Config.get_postgresql_conn_parameters()
         conn = psycopg2.connect(**conn_params)
 
         project_id = db_helpers.add_new_project(conn, project_info)
-        logging.info("project_id = {0}".format(project_id))
+        logging.info("Project \"{0}\": project_id = {1}".format(project_info.name, project_id))
 
         cloc_results = json.loads(cloc_json)
 
@@ -120,32 +136,43 @@ def handle_one_project(url: str):
                 language_handler.handle_one_file(file_info)
                 logging.info("OK")
 
-
     except psycopg2.DatabaseError as error:
+        print("analyze_project() crashed")
         print(error)
     finally:
         if conn is not None:
             conn.close()
         logging.info("connection_closed")
 
-    shutil.rmtree(project_name, ignore_errors=False, onerror=handle_remove_readonly)
+    logging.info("Project \"{0}\": analyze_project() successfully finished".format(project_info.name))
+    print("Project \"{0}\": analyze_project() successfully finished".format(project_info.name))
 
-    logging.warning("Success: project {0}".format(project_name))
-    print("success")
+
+def handle_one_project(url: str):
+    project_name = make_project_name_from_url(url)
+    project_info: ProjectInfo = ProjectInfo(url, project_name)
+
+    logging.info("Project \"{0}\": start processing".format(project_info.name))
+    print("Project \"{0}\": start processing".format(project_info.name))
+
+    git_clone(project_info)
+    analyze_project(project_info)
+    remove_local_project_directory(project_info)
 
 
 
 
 def main():
     init_logging(logging.INFO)
-    config = Config()
 
-    todo_file = open(config.get_todo_file_path(), 'rt')
-    for line in todo_file:
-        if line.isspace():
-            continue
-        handle_one_project(line.strip())
+    # todo_file = open(Config.get_todo_file_path(), 'rt')
+    # for line in todo_file:
+    #     if line.isspace():
+    #         continue
+    #     handle_one_project(line.strip())
 
+    project_info = ProjectInfo("blabla", "tensorflow")
+    analyze_project(project_info)
 
     exit(0)
 

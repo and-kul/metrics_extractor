@@ -1,5 +1,5 @@
 from info.region_info import RegionInfo
-from region_type import RegionType
+from info.region_type import RegionType
 
 
 class FunctionInfo(RegionInfo):

@@ -4,7 +4,7 @@ from lxml import etree
 
 from info.function_info import FunctionInfo
 from info.region_info import RegionInfo
-from region_type import RegionType
+from info.region_type import RegionType
 
 
 def get_subregions(region_element: etree.ElementBase) -> List[etree.ElementBase]:

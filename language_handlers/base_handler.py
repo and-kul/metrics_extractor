@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from config import Config
 from info.file_info import FileInfo
 from info.project_info import ProjectInfo
 from typing import Collection
@@ -14,7 +13,6 @@ class BaseHandler(ABC):
         """
         self.project_info = project_info
         self.conn = conn
-        self.config = Config()
 
     @abstractmethod
     def handle_one_file(self, file_info: FileInfo):

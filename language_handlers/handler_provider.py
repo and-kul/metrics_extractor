@@ -9,7 +9,10 @@ class HandlerProvider:
 
     from_language_to_handler_class = {
         "Java": MetrixppHandler,
-        "C#": MetrixppHandler
+        "C#": MetrixppHandler,
+        "C++": MetrixppHandler,
+        "C": MetrixppHandler,
+        "C/C++ Header": MetrixppHandler,
     }
 
 

@@ -3,6 +3,7 @@ from typing import Collection
 
 import logging
 
+from config import Config
 from database import db_helpers
 from info.file_info import FileInfo
 from info.function_info import FunctionInfo
@@ -15,10 +16,12 @@ class MetrixppHandler(BaseHandler):
         super().__init__(project_info, conn)
         self.metrixpp_collect_performed: bool = False
 
-    def get_metrixpp_xml_for_file(self, file_info: FileInfo) -> str:
-        completed_process = subprocess.run([self.config.get_python27_path(), self.config.get_metrixpp_path(),
+
+    @staticmethod
+    def get_metrixpp_xml_for_file(file_info: FileInfo) -> str:
+        completed_process = subprocess.run([Config.get_python27_path(), Config.get_metrixpp_path(),
                                             'view', '--format=xml', '--nest-regions',
-                                            '--db-file={0}'.format(self.config.get_path_for_temp_metrixpp_db()),
+                                            '--db-file={0}'.format(Config.get_path_for_temp_metrixpp_db()),
                                             '--log-level=WARNING', '--',
                                             file_info.path], stdout=subprocess.PIPE, encoding='utf-8')
         if completed_process.returncode != 0:
@@ -53,11 +56,12 @@ class MetrixppHandler(BaseHandler):
 
 
     def invoke_metrixpp_collect(self):
-        ret = subprocess.call([self.config.get_python27_path(), self.config.get_metrixpp_path(),
+        logging.info("metrix++ collect started")
+        ret = subprocess.call([Config.get_python27_path(), Config.get_metrixpp_path(),
                                'collect', '--std.code.lines.total', '--std.code.lines.code',
                                '--std.code.lines.preprocessor',
                                '--std.code.lines.comments', '--std.code.complexity.cyclomatic',
-                               '--db-file={0}'.format(self.config.get_path_for_temp_metrixpp_db()),
+                               '--db-file={0}'.format(Config.get_path_for_temp_metrixpp_db()),
                                '--log-level=WARNING', '--', self.project_info.name])
         if ret != 0:
             print("ERROR: metrix++ collect crashed. Status code {0}".format(ret))
