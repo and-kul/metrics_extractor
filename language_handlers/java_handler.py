@@ -1,6 +1,8 @@
 import subprocess
 from typing import Collection
 
+import logging
+
 from database import db_helpers
 from info.file_info import FileInfo
 from info.function_info import FunctionInfo
@@ -17,12 +19,12 @@ class JavaHandler(BaseHandler):
         completed_process = subprocess.run([self.config.get_python27_path(), self.config.get_metrixpp_path(),
                                             'view', '--format=xml', '--nest-regions',
                                             '--db-file={0}'.format(self.config.get_path_for_temp_metrixpp_db()),
-                                            '--log-level=WARNING', '--',
+                                            '--log-level=ERROR', '--',
                                             file_info.path], stdout=subprocess.PIPE, encoding='utf-8')
         if completed_process.returncode != 0:
             print("ERROR: metrix++ view crashed. Status code {0}".format(completed_process.returncode))
             exit(1)
-        print("metrix++ view finished")
+        logging.info("metrix++ view finished")
 
         return completed_process.stdout
 
@@ -35,7 +37,6 @@ class JavaHandler(BaseHandler):
         from language_handlers.metrixpp_parser import parse_metrixpp_xml
         db_helpers.add_new_file(self.conn, file_info)
         metrixpp_xml = self.get_metrixpp_xml_for_file(file_info)
-        print(file_info.path)
         regions = parse_metrixpp_xml(metrixpp_xml)
 
         for region_info in regions:
@@ -57,11 +58,11 @@ class JavaHandler(BaseHandler):
                                '--std.code.lines.preprocessor',
                                '--std.code.lines.comments', '--std.code.complexity.cyclomatic',
                                '--db-file={0}'.format(self.config.get_path_for_temp_metrixpp_db()),
-                               '--log-level=WARNING', '--', self.project_info.name])
+                               '--log-level=ERROR', '--', self.project_info.name])
         if ret != 0:
             print("ERROR: metrix++ collect crashed. Status code {0}".format(ret))
             exit(1)
-        print("metrix++ collect finished")
+        logging.info("metrix++ collect finished")
 
 
     def handle_files(self, files: Collection[FileInfo]):

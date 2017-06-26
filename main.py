@@ -4,7 +4,10 @@ import os
 import shutil
 import stat
 import subprocess
+from datetime import datetime
 from typing import List
+
+import logging
 
 import psycopg2
 
@@ -44,7 +47,19 @@ class LanguageStat:
                 self.ccn / self.functions, self.code_lines / self.functions, self.files, self.cloc_files)
 
 
+def init_logging(level=logging.INFO):
+    datetime_fmt = "%Y-%m-%d %H_%M_%S"
+    now = datetime.now()
+    log_filename = os.path.join('log', now.strftime(datetime_fmt) + '.log')
+    Config.log_filename = log_filename
+    fmt = "%(filename)-16s[LINE:%(lineno)4d]# %(levelname)-8s [%(asctime)s]  %(message)s"
+
+    logging.basicConfig(level=level, filename=log_filename, format=fmt)
+
+
 def main():
+    init_logging(logging.INFO)
+
     url = input("Enter URL to the GitHub repository: ")
     config = Config()
 
@@ -53,6 +68,9 @@ def main():
     else:
         project_name = url[url.rfind("/") + 1:]
 
+    logging.warning("Start processing of project: {0}".format(project_name))
+    print("Start processing of project: {0}".format(project_name))
+
     project_info: ProjectInfo = ProjectInfo(url, project_name)
 
     # clone project to local directory ./<project_name>
@@ -60,13 +78,13 @@ def main():
     if ret != 0:
         print("ERROR: git clone crashed. Status code {0}".format(ret))
         exit(1)
-    print("git clone finished")
+    logging.warning("git clone finished")
 
     cloc_json = subprocess.getoutput([config.get_cloc_path(), '--json', '--by-file', project_name])
     # if ret != 0:
     #     print("ERROR: cloc crashed. Status code {0}".format(ret))
     #     exit(1)
-    print("cloc finished")
+    logging.info("cloc finished")
 
     conn = None
 
@@ -77,7 +95,7 @@ def main():
         conn = psycopg2.connect(**conn_params)
 
         project_id = db_helpers.add_new_project(conn, project_info)
-        print("project_id =", project_id)
+        logging.info("project_id = {0}".format(project_id))
 
         cloc_results = json.loads(cloc_json)
 
@@ -99,10 +117,11 @@ def main():
         for file_info in all_files:
             language_handler = handler_provider.get_handler_for_language(file_info.language)
             if language_handler is None:
-                print("Handler for {0} not fount".format(file_info.path))
+                logging.info("Handler for {0} not fount".format(file_info.path))
             else:
-                print("Current file {0}".format(file_info.path))
+                logging.info("Start handling file {0}".format(file_info.path))
                 language_handler.handle_one_file(file_info)
+                logging.info("OK")
 
 
     except psycopg2.DatabaseError as error:
@@ -110,10 +129,11 @@ def main():
     finally:
         if conn is not None:
             conn.close()
-        print("connection_closed")
+        logging.info("connection_closed")
 
     shutil.rmtree(project_name, ignore_errors=False, onerror=handle_remove_readonly)
 
+    logging.warning("Success: project {0}".format(project_name))
     print("success")
     exit(0)
 

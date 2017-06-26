@@ -2,6 +2,8 @@ from configparser import ConfigParser
 
 
 class Config:
+    log_filename = None
+
     def __init__(self, filename='config.ini'):
         self.filename = filename
         # create a parser
