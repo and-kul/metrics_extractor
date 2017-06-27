@@ -12,9 +12,15 @@ from language_handlers.base_handler import BaseHandler
 
 
 class MetrixppHandler(BaseHandler):
+    already_collected_projects = set()
+
+    @classmethod
+    def metrixpp_collect_performed_for(cls, project_info: ProjectInfo) -> bool:
+        return project_info in cls.already_collected_projects
+
+
     def __init__(self, project_info: ProjectInfo, conn):
         super().__init__(project_info, conn)
-        self.metrixpp_collect_performed: bool = False
 
 
     @staticmethod
@@ -33,9 +39,8 @@ class MetrixppHandler(BaseHandler):
 
 
     def handle_one_file(self, file_info: FileInfo):
-        if not self.metrixpp_collect_performed:
+        if not self.metrixpp_collect_performed_for(self.project_info):
             self.invoke_metrixpp_collect()
-            self.metrixpp_collect_performed = True
 
         from language_handlers.metrixpp_parser import parse_metrixpp_xml
         db_helpers.add_new_file(self.conn, file_info)
@@ -66,13 +71,13 @@ class MetrixppHandler(BaseHandler):
         if ret != 0:
             print("ERROR: metrix++ collect crashed. Status code {0}".format(ret))
             exit(1)
+        self.already_collected_projects.add(self.project_info)
         logging.info("metrix++ collect finished")
 
 
     def handle_files(self, files: Collection[FileInfo]):
-        if not self.metrixpp_collect_performed:
+        if not self.metrixpp_collect_performed_for(self.project_info):
             self.invoke_metrixpp_collect()
-            self.metrixpp_collect_performed = True
 
         for file_info in files:
             self.handle_one_file(file_info)
