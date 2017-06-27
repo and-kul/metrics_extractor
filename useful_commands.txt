@@ -1,1 +1,2 @@
 C:\Python27\python.exe C:\workspace\metrics\metrixplusplus-1.3.168\metrix++.py view --format=xml --nest-regions -- tensorflow/tensorflow/compiler/xla/service/hlo_instruction.cc >metrix++_hlo_instruction.xml
+C:\Python27\python.exe C:\workspace\metrics\metrixplusplus-1.3.168\metrix++.py collect --std.code.lines.total --std.code.lines.code --std.code.lines.preprocessor --std.code.lines.comments --std.code.complexity.cyclomatic -- tensorflow

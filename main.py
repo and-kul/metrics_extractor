@@ -98,6 +98,53 @@ def get_cloc_json_for_project(project_info: ProjectInfo) -> str:
     return completed_process.stdout
 
 
+def remove_preprocessor_directives(filename: str):
+    file = open(filename, "rt")
+    lines = file.readlines()
+    file.close()
+
+    if_synonyms = ("#if", "#ifdef", "#ifndef")
+    else_synonyms = ("#elif", "#else")
+
+    nesting_level = 0
+    inside_bad_area = False
+    bad_area_start: int
+    target_nesting_level: int
+
+    lines_to_remove = set()  # lines numbers to remove
+
+    for i in range(0, len(lines)):
+        line = lines[i]
+        line = line.lstrip()
+
+        if inside_bad_area and line.startswith("#endif") and target_nesting_level == nesting_level:
+            inside_bad_area = False
+            lines_to_remove |= set(range(bad_area_start, i))
+
+        if line.startswith("#endif"):
+            nesting_level -= 1
+
+        if line.startswith(if_synonyms):
+            nesting_level += 1
+            continue
+
+        if line.startswith(else_synonyms) and not inside_bad_area:
+            inside_bad_area = True
+            bad_area_start = i + 1
+            target_nesting_level = nesting_level
+            continue
+
+    new_file = open(filename, "wt")
+    for i in range(0, len(lines)):
+        if i not in lines_to_remove:
+            new_file.write(lines[i])
+
+    new_file.close()
+    return
+
+
+
+
 
 def analyze_project(project_info: ProjectInfo):
     cloc_json = get_cloc_json_for_project(project_info)
@@ -124,6 +171,11 @@ def analyze_project(project_info: ProjectInfo):
                                                 cloc_results[file_element]["code"])
             file_info.cloc_metrics = cloc_file_metrics
             all_files.append(file_info)
+
+        # todo call removing preprocessor directives procedure
+        # for file_info in all_files:
+        #     if file_info.language in ("C#", "C", "C++", "C/C++ Header"):
+        #         remove_preprocessor_directives(file_info.path)
 
         handler_provider = HandlerProvider(project_info, conn)
 
@@ -173,6 +225,7 @@ def main():
 
     project_info = ProjectInfo("blabla", "tensorflow")
     analyze_project(project_info)
+    #remove_local_project_directory(project_info)
 
     exit(0)
 
