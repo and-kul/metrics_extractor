@@ -143,6 +143,20 @@ def remove_preprocessor_directives(filename: str):
     return
 
 
+def escape_cpp_raw_string_literals(filename: str):
+    import re
+
+    file = open(filename)
+    code = file.read()
+    file.close()
+
+    raw_string_pattern = \
+        re.compile(r"R\"(?P<delimiter>[^)(\\ \t\x0b\x0c\r\n]{0,16})\((.|\n|\r)*?\)(?P=delimiter)\"")
+
+    new_file = open(filename, "wt")
+    new_file.write(raw_string_pattern.sub("\"***\"", code))
+    new_file.close()
+    return
 
 
 
@@ -172,10 +186,12 @@ def analyze_project(project_info: ProjectInfo):
             file_info.cloc_metrics = cloc_file_metrics
             all_files.append(file_info)
 
-        # todo call removing preprocessor directives procedure
-        # for file_info in all_files:
-        #     if file_info.language in ("C#", "C", "C++", "C/C++ Header"):
-        #         remove_preprocessor_directives(file_info.path)
+
+        for file_info in all_files:
+            if file_info.language in ("C#", "C", "C++", "C/C++ Header"):
+                remove_preprocessor_directives(file_info.path)
+            if file_info.language in ("C++", "C/C++ Header"):
+                escape_cpp_raw_string_literals(file_info.path)
 
         handler_provider = HandlerProvider(project_info, conn)
 
