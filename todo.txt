@@ -1,2 +1,1 @@
-https://github.com/JamesNK/Newtonsoft.Json
-https://github.com/aspnet/EntityFramework6
+https://github.com/google/gson

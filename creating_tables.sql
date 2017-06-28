@@ -43,8 +43,6 @@ CREATE TABLE regions (
   total_lines                     INTEGER,
   code_lines                      INTEGER,
   comment_lines                   INTEGER,
-  average_cyclomatic_complexity   DOUBLE PRECISION,
-  average_code_lines_per_function DOUBLE PRECISION,
   n_functions                     INTEGER
 );
 
