@@ -70,8 +70,9 @@ def extract_info_recursively(region_element: etree.ElementBase, outer_region: Un
     if outer_region is not None:
         outer_region.total_code_lines += current_region_info.total_code_lines
         outer_region.total_comment_lines += current_region_info.total_comment_lines
-        outer_region.ccn_sum += current_region_info.ccn_sum
-        outer_region.n_functions += current_region_info.n_functions
+        if isinstance(current_region_info, FunctionInfo):
+            outer_region.ccn_sum += current_region_info.ccn_sum
+            outer_region.n_functions += current_region_info.n_functions
     regions.append(current_region_info)
     return
 
