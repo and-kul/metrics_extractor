@@ -20,7 +20,7 @@ CREATE TABLE languages (
 
 CREATE TABLE files (
   id                 SERIAL PRIMARY KEY,
-  project_id         INTEGER NOT NULL REFERENCES projects (id),
+  project_id         INTEGER NOT NULL REFERENCES projects (id) ON DELETE CASCADE,
   path               TEXT    NOT NULL,
   language_name      TEXT    NOT NULL REFERENCES languages (name),
   cloc_blank_lines   INTEGER,
@@ -36,10 +36,10 @@ CREATE TABLE region_types (
 
 CREATE TABLE regions (
   id                              SERIAL PRIMARY KEY,
-  file_id                         INTEGER NOT NULL REFERENCES files (id),
+  file_id                         INTEGER NOT NULL REFERENCES files (id) ON DELETE CASCADE,
   region_type                     TEXT    NOT NULL REFERENCES region_types (name),
   short_name                      TEXT    NOT NULL,
-  outer_region_id                 INTEGER REFERENCES regions (id),
+  outer_region_id                 INTEGER REFERENCES regions (id) ON DELETE CASCADE,
   total_lines                     INTEGER,
   code_lines                      INTEGER,
   comment_lines                   INTEGER,
@@ -51,7 +51,7 @@ CREATE TABLE regions (
 
 CREATE TABLE functions (
   id                    SERIAL PRIMARY KEY,
-  region_id             INTEGER NOT NULL REFERENCES regions (id),
+  region_id             INTEGER NOT NULL REFERENCES regions (id) ON DELETE CASCADE,
   short_name            TEXT    NOT NULL,
   total_lines           INTEGER,
   code_lines            INTEGER,
