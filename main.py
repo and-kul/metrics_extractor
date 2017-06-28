@@ -92,13 +92,13 @@ def get_cloc_json_for_project(project_info: ProjectInfo) -> str:
         logging.error("Project \"{0}\": cloc crashed. Status code = {1}"
                       .format(project_info.name, completed_process.returncode))
         print("ERROR: Project \"{0}\": cloc crashed. Status code = {1}"
-                      .format(project_info.name, completed_process.returncode))
+              .format(project_info.name, completed_process.returncode))
         exit(1)
     logging.info("Project \"{0}\": cloc finished".format(project_info.name))
     return completed_process.stdout
 
 
-def remove_preprocessor_directives(filename: str):
+def remove_preprocessor_directives(project_info: ProjectInfo, filename: str):
     file = open(filename, "rt")
     lines = file.readlines()
     file.close()
@@ -134,6 +134,9 @@ def remove_preprocessor_directives(filename: str):
             target_nesting_level = nesting_level
             continue
 
+    if len(lines_to_remove) > 0:
+        project_info.files_with_preprocessor_directives_changed += 1
+
     new_file = open(filename, "wt")
     for i in range(0, len(lines)):
         if i not in lines_to_remove:
@@ -143,7 +146,7 @@ def remove_preprocessor_directives(filename: str):
     return
 
 
-def escape_cpp_raw_string_literals(filename: str):
+def escape_cpp_raw_string_literals(project_info: ProjectInfo, filename: str):
     import re
 
     file = open(filename)
@@ -153,11 +156,13 @@ def escape_cpp_raw_string_literals(filename: str):
     raw_string_pattern = \
         re.compile(r"R\"(?P<delimiter>[^)(\\ \t\x0b\x0c\r\n]{0,16})\((.|\n|\r)*?\)(?P=delimiter)\"")
 
+    if raw_string_pattern.search(code):
+        project_info.files_with_raw_strings_changed += 1
+
     new_file = open(filename, "wt")
     new_file.write(raw_string_pattern.sub("\"***\"", code))
     new_file.close()
     return
-
 
 
 def analyze_project(project_info: ProjectInfo):
@@ -186,21 +191,25 @@ def analyze_project(project_info: ProjectInfo):
             file_info.cloc_metrics = cloc_file_metrics
             all_files.append(file_info)
 
-
         for file_info in all_files:
             if file_info.language in ("C#", "C", "C++", "C/C++ Header"):
-                remove_preprocessor_directives(file_info.path)
-            if file_info.language in ("C++", "C/C++ Header"):
-                escape_cpp_raw_string_literals(file_info.path)
+                try:
+                    remove_preprocessor_directives(project_info, file_info.path)
+                except UnicodeDecodeError as e:
+                    print(e)
+            if file_info.language in ("C++", "C/C++ Header", "C"):
+                escape_cpp_raw_string_literals(project_info, file_info.path)
 
         handler_provider = HandlerProvider(project_info, conn)
 
+        i = 0
         for file_info in all_files:
+            i += 1
             language_handler = handler_provider.get_handler_for_language(file_info.language)
             if language_handler is None:
                 logging.info("Handler for {0} not found".format(file_info.path))
             else:
-                logging.info("Start handling file {0}".format(file_info.path))
+                logging.info("Start handling file {0} [{1}/{2}]".format(file_info.path, i, len(all_files)))
                 language_handler.handle_one_file(file_info)
                 logging.info("OK")
 
@@ -213,7 +222,23 @@ def analyze_project(project_info: ProjectInfo):
         logging.info("connection_closed")
 
     logging.info("Project \"{0}\": analyze_project() successfully finished".format(project_info.name))
+    logging.info("""Files added: {0}
+        Files with errors: {1}
+        Files changed because of preprocessor directives: {2}
+        Files with C++11 raw string literals changed: {3}"""
+                 .format(project_info.files_analyzed,
+                         project_info.files_with_errors,
+                         project_info.files_with_preprocessor_directives_changed,
+                         project_info.files_with_raw_strings_changed))
     print("Project \"{0}\": analyze_project() successfully finished".format(project_info.name))
+    print("""Files added: {0}
+        Files with errors: {1}
+        Files changed because of preprocessor directives: {2}
+        Files with C++11 raw string literals changed: {3}"""
+          .format(project_info.files_analyzed,
+                  project_info.files_with_errors,
+                  project_info.files_with_preprocessor_directives_changed,
+                  project_info.files_with_raw_strings_changed))
 
 
 def handle_one_project(url: str):
@@ -228,20 +253,14 @@ def handle_one_project(url: str):
     remove_local_project_directory(project_info)
 
 
-
-
 def main():
     init_logging(logging.INFO)
 
-    # todo_file = open(Config.get_todo_file_path(), 'rt')
-    # for line in todo_file:
-    #     if line.isspace():
-    #         continue
-    #     handle_one_project(line.strip())
-
-    project_info = ProjectInfo("blabla", "tensorflow")
-    analyze_project(project_info)
-    #remove_local_project_directory(project_info)
+    todo_file = open(Config.get_todo_file_path(), 'rt')
+    for line in todo_file:
+        if line.isspace():
+            continue
+        handle_one_project(line.strip())
 
     exit(0)
 
