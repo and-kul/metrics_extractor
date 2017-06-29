@@ -4,6 +4,7 @@ import os
 import shutil
 import stat
 import subprocess
+import traceback
 from datetime import datetime
 from typing import List
 
@@ -213,32 +214,34 @@ def analyze_project(project_info: ProjectInfo):
                 language_handler.handle_one_file(file_info)
                 logging.info("OK")
 
-    except psycopg2.DatabaseError as error:
-        print("analyze_project() crashed")
-        print(error)
+        logging.info("Project \"{0}\": analyze_project() successfully finished".format(project_info.name))
+        logging.info("""Files added: {0}
+                Files with errors: {1}
+                Files changed because of preprocessor directives: {2}
+                Files with C++11 raw string literals changed: {3}"""
+                     .format(project_info.files_analyzed,
+                             project_info.files_with_errors,
+                             project_info.files_with_preprocessor_directives_changed,
+                             project_info.files_with_raw_strings_changed))
+        print("Project \"{0}\": analyze_project() successfully finished".format(project_info.name))
+        print("""Files added: {0}
+                Files with errors: {1}
+                Files changed because of preprocessor directives: {2}
+                Files with C++11 raw string literals changed: {3}"""
+              .format(project_info.files_analyzed,
+                      project_info.files_with_errors,
+                      project_info.files_with_preprocessor_directives_changed,
+                      project_info.files_with_raw_strings_changed))
+
+    except (psycopg2.DatabaseError, Exception):
+        print("Project \"{0}\": analyze_project() FATAL ERROR".format(project_info.name))
+        traceback.print_exc()
+        logging.critical("Project \"{0}\": analyze_project() FATAL ERROR".format(project_info.name))
+        logging.exception("FATAL ERROR")
     finally:
         if conn is not None:
             conn.close()
         logging.info("connection_closed")
-
-    logging.info("Project \"{0}\": analyze_project() successfully finished".format(project_info.name))
-    logging.info("""Files added: {0}
-        Files with errors: {1}
-        Files changed because of preprocessor directives: {2}
-        Files with C++11 raw string literals changed: {3}"""
-                 .format(project_info.files_analyzed,
-                         project_info.files_with_errors,
-                         project_info.files_with_preprocessor_directives_changed,
-                         project_info.files_with_raw_strings_changed))
-    print("Project \"{0}\": analyze_project() successfully finished".format(project_info.name))
-    print("""Files added: {0}
-        Files with errors: {1}
-        Files changed because of preprocessor directives: {2}
-        Files with C++11 raw string literals changed: {3}"""
-          .format(project_info.files_analyzed,
-                  project_info.files_with_errors,
-                  project_info.files_with_preprocessor_directives_changed,
-                  project_info.files_with_raw_strings_changed))
 
 
 def handle_one_project(url: str):
