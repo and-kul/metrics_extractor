@@ -53,11 +53,13 @@ def add_new_function(conn, function_info: FunctionInfo) -> int:
     :param function_info: function to be added
     :return: new function_id
     """
-    insert_function_sql = """INSERT INTO functions(region_id, short_name, total_lines, code_lines, comment_lines,
-        cyclomatic_complexity) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id;"""
+    insert_function_sql = """INSERT INTO functions(file_id, region_id, short_name, total_lines, code_lines, comment_lines,
+        cyclomatic_complexity) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id;"""
 
     cur = conn.cursor()
-    cur.execute(insert_function_sql, (function_info.outer_region.id, function_info.short_name,
+    cur.execute(insert_function_sql, (function_info.file_info.id,
+                                      function_info.outer_region.id,
+                                      function_info.short_name,
                                       function_info.total_lines,
                                       function_info.total_code_lines,  # todo: or own_code_lines ?
                                       function_info.total_comment_lines,  # todo: or own_comment_lines ?
@@ -97,5 +99,3 @@ def add_new_region(conn, region_info: RegionInfo) -> int:
     conn.commit()
     cur.close()
     return region_id
-
-

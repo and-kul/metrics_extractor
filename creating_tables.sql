@@ -29,26 +29,31 @@ CREATE TABLE files (
 );
 
 
+CREATE INDEX ON files (language_name, project_id);
+
+
 CREATE TABLE region_types (
   name TEXT PRIMARY KEY
 );
 
 
 CREATE TABLE regions (
-  id                              SERIAL PRIMARY KEY,
-  file_id                         INTEGER NOT NULL REFERENCES files (id) ON DELETE CASCADE,
-  region_type                     TEXT    NOT NULL REFERENCES region_types (name),
-  short_name                      TEXT    NOT NULL,
-  outer_region_id                 INTEGER REFERENCES regions (id) ON DELETE CASCADE,
-  total_lines                     INTEGER,
-  code_lines                      INTEGER,
-  comment_lines                   INTEGER,
-  n_functions                     INTEGER
+  id              SERIAL PRIMARY KEY,
+  file_id         INTEGER NOT NULL REFERENCES files (id) ON DELETE CASCADE,
+  region_type     TEXT    NOT NULL REFERENCES region_types (name),
+  short_name      TEXT    NOT NULL,
+  outer_region_id INTEGER REFERENCES regions (id) ON DELETE CASCADE,
+  total_lines     INTEGER,
+  code_lines      INTEGER,
+  comment_lines   INTEGER,
+  n_functions     INTEGER
 );
 
+CREATE INDEX ON regions (file_id);
 
 CREATE TABLE functions (
   id                    SERIAL PRIMARY KEY,
+  file_id               INTEGER NOT NULL REFERENCES files (id) ON DELETE CASCADE,
   region_id             INTEGER NOT NULL REFERENCES regions (id) ON DELETE CASCADE,
   short_name            TEXT    NOT NULL,
   total_lines           INTEGER,
@@ -57,6 +62,7 @@ CREATE TABLE functions (
   cyclomatic_complexity INTEGER
 );
 
+CREATE INDEX ON functions (file_id);
 
 INSERT INTO languages (name) VALUES
   ('Java'),
