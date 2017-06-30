@@ -199,7 +199,10 @@ def analyze_project(project_info: ProjectInfo):
                 except UnicodeDecodeError as e:
                     print(e)
             if file_info.language in ("C++", "C/C++ Header", "C"):
-                escape_cpp_raw_string_literals(project_info, file_info.path)
+                try:
+                    escape_cpp_raw_string_literals(project_info, file_info.path)
+                except UnicodeDecodeError as e:
+                    print(e)
 
         handler_provider = HandlerProvider(project_info, conn)
 

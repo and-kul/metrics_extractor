@@ -86,7 +86,7 @@ def parse_metrixpp_xml(metrixpp_xml: str) -> List[RegionInfo]:
         troubles = (
             "operator<<", "operator>>", "operator<", "operator>", "operator<=",
             "operator>=", "operator&", "operator&&", "operator <", "operator >",
-            "operator <=", "operator >=", "operator <<", "operator >>", "operator &")
+            "operator <=", "operator >=", "operator <<", "operator >>", "operator &", "operator->", "operator ->")
         for trouble in troubles:
             metrixpp_xml = metrixpp_xml.replace(trouble, escape(trouble))
         root = etree.fromstring(metrixpp_xml)

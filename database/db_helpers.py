@@ -46,6 +46,15 @@ def add_new_file(conn, file_info: FileInfo) -> int:
     return file_id
 
 
+def delete_file(conn, file_info: FileInfo):
+    delete_sql = """DELETE FROM files WHERE id = %s;"""
+    cur = conn.cursor()
+    cur.execute(delete_sql, (file_info.id,))
+    conn.commit()
+    cur.close()
+    return
+
+
 def add_new_function(conn, function_info: FunctionInfo) -> int:
     """
     Inserts new function to the database, updating function_info.id

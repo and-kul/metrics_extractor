@@ -53,19 +53,25 @@ class MetrixppHandler(BaseHandler):
         self.project_info.files_analyzed += 1
 
         metrixpp_xml = self.get_metrixpp_xml_for_file(file_info)
-        regions = parse_metrixpp_xml(metrixpp_xml)
+        try:
+            regions = parse_metrixpp_xml(metrixpp_xml)
+            for region_info in regions:
+                region_info.file_info = file_info
 
-        for region_info in regions:
-            region_info.file_info = file_info
+            for region_info in reversed(regions):
+                if region_info.is_inside_some_function:
+                    continue
+                if isinstance(region_info, FunctionInfo):
+                    db_helpers.add_new_function(self.conn, region_info)
+                else:
+                    db_helpers.add_new_region(self.conn, region_info)
 
-        for region_info in reversed(regions):
-            if region_info.is_inside_some_function:
-                continue
-            if isinstance(region_info, FunctionInfo):
-                db_helpers.add_new_function(self.conn, region_info)
-            else:
-                db_helpers.add_new_region(self.conn, region_info)
-        return
+        except Exception as e:
+            logging.error("ERROR: file \"{0}\" was skipped because of parse error".format(file_info.path))
+            print("ERROR: file \"{0}\" was skipped because of parse error".format(file_info.path))
+            self.project_info.files_with_errors += 1
+            db_helpers.delete_file(self.conn, file_info)
+
 
 
     @staticmethod
