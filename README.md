@@ -31,6 +31,9 @@ It is experimental tool which analyzes specified git repositories and stores res
 * Metrix++ [link to latest version](https://sourceforge.net/projects/metrixplusplus/files/latest/download)
 * PostgreSQL
 
+### creating_tables.sql
+Please run SQL script inside this file to create db tables
+
 ### config.ini
 Also you must change some parameters in the file *config.ini*. Please, specify:
 * paths to
