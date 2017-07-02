@@ -4,7 +4,7 @@ Tool for extracting various metrics from source code
 It is experimental tool which analyzes specified git repositories and stores results in a PostgreSQL database.
 
 ### Supported languages
-* C++
+* C/C++
 * Java
 * C#
 
