@@ -23,7 +23,7 @@ It is experimental tool which analyzes specified git repositories and stores res
 ### To use this app you need
 * python 3.6 interpreter (for the program itself)
 * python 2.7 interperter (for Metrix++)
-   Python packages:
+* Python packages:
    + psycopg2 (to work with PostgreSQL database)
    + lxml (to parse xml results of Metrix++)
 * git (to clone specified repositories for analyzing)
