@@ -52,6 +52,10 @@ def init_logging(level=logging.INFO):
     datetime_fmt = "%Y-%m-%d %H_%M_%S"
     now = datetime.now()
     log_filename = os.path.join('log', now.strftime(datetime_fmt) + '.log')
+    log_directory = os.path.dirname(log_filename)
+    if not os.path.exists(log_directory):
+        os.makedirs(log_directory)
+
     Config.log_filename = log_filename
     fmt = "%(filename)24s[LINE:%(lineno)4d]# %(levelname)-8s [%(asctime)s]  %(message)s"
 
